@@ -1,10 +1,7 @@
 # EnvironmentalData.py script
-# Creates a database connection to SenseHat MySQL and inserts data from
-# SenseHat instruments to table EnvironmentalData
-# Creates UID as Primary Key and collects Temperature (adjusted for CPU temperature), Pressure and Humidity values
-# DateTimeStamp is now created on the Table itself on INSERT
+# Creates a db connection to MySQL and inserts data from Sense Hat sensors
+# Creates UID as Primary Key and collects Temperature (adjusted to compensate for CPU temperature), Pressure and Humidity from SenseHat hardware
 
-#Import everything needed
 import MySQLdb
 import uuid
 import datetime
@@ -16,27 +13,23 @@ import os
 #Wait time in seconds between logging attempts
 wait = 600
 
-#Temperature Adjustement - the Temperature Sensor is on the Raspberry Pi so gives spurious values - too HOT!
+#Temperature Compensation
 temp_adj = 1.5
 
-#set up the sense hat for data gathering from the instruments
+#set up SenseHat
 from sense_hat import SenseHat
 sense = SenseHat()
 
-#set the local variables for each logging attempt
 while True:
     #Sense Hat values
     t = sense.get_temperature()
     p = sense.get_pressure()
     h = sense.get_humidity()
-    #DateTimeStamp = datetime.datetime.now() --Not needed now as doing in the database table itself
-    UID = uuid.uuid4() # crfeate GUID for use in MySQL as Primary Key
+    #DateTimeStamp = datetime.datetime.now() --Now doing on the db table
+    UID = uuid.uuid4() # create GUID for use in MySQL as Primary Key
 
-    #Because the SenseHat is right on top of the Raspberry Pi we need to do some adjustments
-    #This gets the CPU Temperature and uses this to adjust actual temperature values
+    #Compensate for CPU Temperature affecting SenseHat temperature sensor
     cpu_temp = os.popen("vcgencmd measure_temp").readline()
-
-    #Chop out the text and cast to float so we can work with it
     cpu_t = float(cpu_temp.replace("temp=","").replace("'C\n",""))
 
     #Do the actual adjustment for CPU temperatures
@@ -50,10 +43,9 @@ while True:
 
     #Try block to execute the SQL INSERT and commit or rollback
     try:
-        #Set the database connection - keeping it simple as secure dedicated db
         db = MySQLdb.connect(host="localhost", user="your user", passwd="your pwd", db="SenseHat")
 
-        #Create a cursor to do actions on the database
+        #Create a cursor
         cur = db.cursor()
 
         #Set up the SQL string and arguments using Sense Hat adjusted data for the INSERT Values
@@ -64,7 +56,7 @@ while True:
         #Execute MySQL logging attempt
         cur.execute(sql, args)
         db.commit()
-        #print "Success"
+        #print "Success" --debugging
 
         #Clean up the db connections
         cur.close()
@@ -72,11 +64,11 @@ while True:
 
     except:
         db.rollback()
-        #print "Failure"
+        #print "Failure" --debugging
 
         #Clean up the db connections
         cur.close()
         db.close()
 
-    #Wait for configurable time before continuing the logging
+    #Wait for next logging interval
     time.sleep(wait)
