@@ -7,8 +7,8 @@ $db = new DB_Class();
 	$start_date = $_GET["start_date"];
 	$end_date = $_GET["end_date"];	
 	
-	//Use ajax get input parameter to determine correct SQL string
-	//User is looked down to read only access - so no SQL injection code
+	//Use jQuery ajax get input parameters to determine correct SQL string
+	//User is locked down to read only access - so no SQL injection code here
 	if ($report == "temperature")
 	{
 		$query = "SELECT DateTimeStamp,Temperature FROM EnvironmentalData ";
@@ -32,7 +32,7 @@ $db = new DB_Class();
 	}
 
 
-	// now do the actual db call
+	// now do the actual db call using the SQL we just built
     $result = mysql_query( $query );
 	$rows = array();
 	while( $row = mysql_fetch_array( $result ) ) {

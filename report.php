@@ -29,7 +29,7 @@
 		var date_start = getQueryString('date_start');
 		var date_end = getQueryString('date_end');
 		
-		//Set up jQuery ajax call to generic php page to handle MySQL data access and return data object
+		//Set up jQuery ajax call to generic php page to handle MySQL data access and return json data
 		//Passes in parameters so it knows what SQl query to run
         jQuery.ajax({
             url: 'report_ajax_handler.php',
